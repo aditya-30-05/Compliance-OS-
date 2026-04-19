@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Billing | ComplianceOS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#030712;--surface:#0f172a;--border:#334155;
+  --accent:#3b82f6;--accent2:#8b5cf6;--text:#f8fafc;--muted:#94a3b8;
+  --grad:linear-gradient(135deg,#3b82f6,#8b5cf6);
+}
+body {
+  background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif;
+  min-height: 100vh; margin: 0; padding: 60px 20px;
+}
+.bg-grid {
+  position: fixed; inset: 0; background-image: linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size: 80px 80px; opacity: 0.1; pointer-events: none;
+}
+.container { max-width: 1000px; margin: 0 auto; position: relative; z-index: 10; }
+header { text-align: center; margin-bottom: 60px; }
+h1 { font-size: 3rem; font-weight: 800; letter-spacing: -2px; margin-bottom: 16px; }
+.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.plan-card {
+  background: rgba(15,23,42,0.6); backdrop-filter: blur(20px); border: 1px solid var(--border);
+  border-radius: 24px; padding: 40px; display: flex; flex-direction: column; transition: 0.3s;
+}
+.plan-card:hover { border-color: var(--accent); transform: translateY(-10px); background: rgba(30,41,59,0.8); }
+.plan-card.popular { border-color: var(--accent2); position: relative; }
+.plan-card.popular::after {
+  content: 'MOST POPULAR'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: var(--accent2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800;
+}
+.plan-name { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
+.plan-price { font-size: 2.5rem; font-weight: 800; margin-bottom: 24px; }
+.plan-price span { font-size: 1rem; color: var(--muted); font-weight: 400; }
+.features { list-style: none; padding: 0; margin: 0 0 32px 0; flex-grow: 1; }
+.features li { margin-bottom: 12px; color: var(--muted); font-size: 0.9rem; display: flex; align-items: center; }
+.features li::before { content: '✓'; color: var(--accent); margin-right: 12px; font-weight: 900; }
+.btn {
+  width: 100%; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  border-radius: 12px; color: #fff; font-weight: 700; cursor: pointer; transition: 0.3s;
+}
+.btn.primary { background: var(--grad); border: none; }
+.btn:hover { background: var(--accent); color: #fff; transform: scale(1.02); }
+
+.usage-section { margin-top: 80px; background: rgba(15,23,42,0.4); border: 1px solid var(--border); border-radius: 24px; padding: 40px; }
+.usage-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+.usage-item h4 { margin: 0 0 12px 0; color: var(--muted); font-size: 0.8rem; text-transform: uppercase; }
+.progress-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--grad); width: 0%; transition: 1s ease-out; }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="container">
+  <header>
+    <h1>Plans & Usage</h1>
+    <p style="color: var(--muted)">Scale your compliance engine as you grow</p>
+  </header>
+
+  <div class="pricing-grid">
+    <div class="plan-card">
+      <div class="plan-name">Free</div>
+      <div class="plan-price">$0<span>/mo</span></div>
+      <ul class="features">
+        <li>10 Reports / mo</li>
+        <li>50 AI Credits</li>
+        <li>100MB Storage</li>
+        <li>2 Team Members</li>
+      </ul>
+      <button class="btn" disabled>Current Plan</button>
+    </div>
+    
+    <div class="plan-card popular">
+      <div class="plan-name">Startup</div>
+      <div class="plan-price">$49<span>/mo</span></div>
+      <ul class="features">
+        <li>100 Reports / mo</li>
+        <li>500 AI Credits</li>
+        <li>1GB Storage</li>
+        <li>10 Team Members</li>
+        <li>OCR Enabled</li>
+      </ul>
+      <button class="btn primary" onclick="checkout('startup')">Upgrade Now</button>
+    </div>
+
+    <div class="plan-card">
+      <div class="plan-name">Growth</div>
+      <div class="plan-price">$199<span>/mo</span></div>
+      <ul class="features">
+        <li>500 Reports / mo</li>
+        <li>2,000 AI Credits</li>
+        <li>5GB Storage</li>
+        <li>50 Team Members</li>
+        <li>Priority Support</li>
+        <li>API Access</li>
+      </ul>
+      <button class="btn" onclick="checkout('growth')">Get Growth</button>
+    </div>
+  </div>
+
+  <div class="usage-section">
+    <h3 style="margin-top:0">Current Usage</h3>
+    <div class="usage-grid">
+      <div class="usage-item">
+        <h4 id="reportLabel">Reports (0/0)</h4>
+        <div class="progress-bg"><div id="reportProgress" class="progress-fill"></div></div>
+      </div>
+      <div class="usage-item">
+        <h4 id="aiLabel">AI Credits (0/0)</h4>
+        <div class="progress-bg"><div id="aiProgress" class="progress-fill"></div></div>
+      </div>
+      <div class="usage-item">
+        <h4 id="storageLabel">Storage (0/0 MB)</h4>
+        <div class="progress-bg"><div id="storageProgress" class="progress-fill"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('cos_token');
+if (!token) window.location.href = '/login.html';
+
+async function fetchUsage() {
+  const res = await fetch('/billing/usage', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  if (res.ok) {
+    const data = await res.json();
+    updateUsage(data);
+  }
+}
+
+function updateUsage(data) {
+  const updateBar = (id, used, limit, labelId, suffix='') => {
+    const pct = limit === -1 ? 0 : (used / limit) * 100;
+    const bar = document.getElementById(id);
+    const label = document.getElementById(labelId);
+    bar.style.width = limit === -1 ? '100%' : `${pct}%`;
+    label.innerText = `${labelId.replace('Label', '')}: ${used} / ${limit === -1 ? '∞' : limit}${suffix}`;
+  };
+  
+  updateBar('reportProgress', data.reports.used, data.reports.limit, 'reportLabel');
+  updateBar('aiProgress', data.ai.used, data.ai.limit, 'aiLabel');
+  updateBar('storageProgress', data.storage.used, data.storage.limit, 'storageLabel', ' MB');
+}
+
+async function checkout(plan) {
+  const res = await fetch('/billing/checkout', {
+    method: 'POST',
+    headers: { 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json' 
+    },
+    body: JSON.stringify({ plan })
+  });
+  const data = await res.json();
+  if (data.url) window.location.href = data.url;
+}
+
+fetchUsage();
+gsap.from(".plan-card", { opacity: 0, y: 30, stagger: 0.1, duration: 0.8, ease: "back.out(1.7)" });
+</script>
+</body>
+</html>

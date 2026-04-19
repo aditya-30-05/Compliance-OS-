@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sign Up | ComplianceOS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#030712;--surface:#0f172a;--border:#334155;
+  --accent:#3b82f6;--accent2:#8b5cf6;--text:#f8fafc;--muted:#94a3b8;
+  --grad:linear-gradient(135deg,#3b82f6,#8b5cf6);
+}
+body {
+  background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif;
+  min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; padding: 40px 0;
+}
+.bg-grid {
+  position: fixed; inset: 0; background-image: linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size: 80px 80px; opacity: 0.1; pointer-events: none;
+}
+.login-card {
+  width: 100%; max-width: 500px; background: rgba(15,23,42,0.8); backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 40px;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); position: relative; z-index: 10;
+}
+.login-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--grad); border-radius: 24px 24px 0 0; }
+h1 { font-size: 2rem; font-weight: 800; text-align: center; margin-bottom: 8px; letter-spacing: -1px; }
+p.subtitle { text-align: center; color: var(--muted); font-size: 0.9rem; margin-bottom: 32px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.form-group { margin-bottom: 20px; }
+.full-width { grid-column: span 2; }
+label { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; letter-spacing: 1px; font-weight: 700; }
+input, select {
+  width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px; color: #fff; outline: none; transition: 0.3s; box-sizing: border-box;
+}
+input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(59,130,246,0.1); }
+.btn {
+  width: 100%; padding: 16px; background: var(--grad); border: none; border-radius: 12px;
+  color: #fff; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(59,130,246,0.3); }
+.links { margin-top: 24px; text-align: center; font-size: 0.85rem; color: var(--muted); }
+.links a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.error-msg { color: #ef4444; font-size: 0.85rem; text-align: center; margin-bottom: 16px; display: none; }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="login-card">
+  <h1>Join ComplianceOS</h1>
+  <p class="subtitle">Deploy autonomous regulatory intelligence</p>
+  
+  <div id="errorMessage" class="error-msg"></div>
+  
+  <form id="signupForm">
+    <div class="form-grid">
+      <div class="form-group full-width">
+        <label>Full Name</label>
+        <input type="text" id="fullName" placeholder="Jane Cooper" required/>
+      </div>
+      <div class="form-group full-width">
+        <label>Work Email</label>
+        <input type="email" id="email" placeholder="jane@company.com" required/>
+      </div>
+      <div class="form-group">
+        <label>Company Name</label>
+        <input type="text" id="company" placeholder="Acme Inc." required/>
+      </div>
+      <div class="form-group">
+        <label>Industry</label>
+        <select id="industry">
+          <option value="banking">Banking</option>
+          <option value="fintech">Fintech</option>
+          <option value="insurance">Insurance</option>
+          <option value="nbfc">NBFC</option>
+          <option value="corporate">Corporate</option>
+        </select>
+      </div>
+      <div class="form-group full-width">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Min. 8 characters" required/>
+      </div>
+    </div>
+    <button type="submit" class="btn">Create Account</button>
+  </form>
+  
+  <div class="links">
+    <p>Already have an account? <a href="/login.html">Sign in</a></p>
+  </div>
+</div>
+
+<script>
+gsap.from(".login-card", { opacity: 0, y: 50, duration: 1, ease: "power4.out" });
+
+document.getElementById('signupForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const full_name = document.getElementById('fullName').value;
+  const company_name = document.getElementById('company').value;
+  const industry = document.getElementById('industry').value;
+  const errorDiv = document.getElementById('errorMessage');
+  
+  errorDiv.style.display = 'none';
+  
+  try {
+    const response = await fetch('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, full_name, company_name, industry })
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+      localStorage.setItem('cos_token', data.access_token);
+      localStorage.setItem('cos_refresh', data.refresh_token);
+      localStorage.setItem('cos_user', JSON.stringify(data.user));
+      window.location.href = '/';
+    } else {
+      errorDiv.textContent = data.detail || 'Registration failed';
+      errorDiv.style.display = 'block';
+    }
+  } catch (err) {
+    errorDiv.textContent = 'Connection error. Please try again.';
+    errorDiv.style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>

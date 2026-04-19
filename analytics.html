@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Analytics Dashboard Prototype</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script src="./mock_api.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+    background-color: #dce5f0; 
+    font-family: Arial, sans-serif; 
+    color: #444; 
+    padding: 20px;
+}
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 20px;
+    height: 95vh;
+}
+.chart-box {
+    background: transparent;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+.chart-header {
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 1.3rem;
+    padding: 10px;
+    position: relative;
+}
+.hamburger {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    color: #888;
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 0.5;
+}
+.canvas-wrapper {
+    flex: 1;
+    position: relative;
+    padding: 10px;
+}
+.annotation {
+    font-size: 0.8rem;
+    color: #555;
+    padding-left: 20px;
+    margin-top: -10px;
+}
+</style>
+</head>
+<body>
+
+<div class="grid-container">
+    
+    <!-- Top Left: Horizontal Bar -->
+    <div class="chart-box">
+        <div class="chart-header">
+            Annual Total Sales <span class="hamburger">≡</span>
+        </div>
+        <div class="canvas-wrapper">
+            <canvas id="chart1"></canvas>
+        </div>
+        <div class="annotation">* Click one of the 2 bars, and the other charts will switch to the corresponding year.</div>
+    </div>
+
+    <!-- Top Right: Line Chart -->
+    <div class="chart-box" style="border-left: 2px solid #fff;">
+        <div class="chart-header">
+            Monthly Return Rate in 2009 <span class="hamburger">≡</span>
+        </div>
+        <div class="canvas-wrapper">
+            <canvas id="chart2"></canvas>
+        </div>
+    </div>
+
+    <!-- Bottom Left: Doughnut/Pie Chart -->
+    <div class="chart-box" style="border-top: 2px solid #fff;">
+        <div class="chart-header">
+            Total Orders in 2009 <span class="hamburger">≡</span>
+        </div>
+        <div class="canvas-wrapper" style="padding-top:40px">
+            <canvas id="chart3"></canvas>
+        </div>
+    </div>
+
+    <!-- Bottom Right: Vertical Bar Chart -->
+    <div class="chart-box" style="border-left: 2px solid #fff; border-top: 2px solid #fff;">
+        <div class="chart-header">
+            Total Sales Ranking in 2009 <span class="hamburger">≡</span>
+        </div>
+        <div class="canvas-wrapper">
+            <canvas id="chart4"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Register DataLabels globally
+Chart.register(ChartDataLabels);
+
+async function initDashboard() {
+    const data = await window.AnalyticsAPI.getDashboardData();
+
+    // Chart 1: Annual Total Sales (Horizontal Bar)
+    new Chart(document.getElementById('chart1'), {
+        type: 'bar',
+        data: {
+            labels: data.annualSales.labels,
+            datasets: [{
+                data: data.annualSales.data,
+                backgroundColor: '#3b82f6',
+                barPercentage: 0.4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                datalabels: { color: '#fff', anchor: 'end', align: 'left', font:{size:11}, formatter: (v) => v.toLocaleString() }
+            },
+            scales: {
+                x: { display: false, grid: {display:false} },
+                y: { grid: {color: '#cfd9e5'}, ticks: {font: {size: 14}} }
+            }
+        }
+    });
+
+    // Chart 2: Monthly Return Rate (Line)
+    new Chart(document.getElementById('chart2'), {
+        type: 'line',
+        data: {
+            labels: data.monthlyReturn.labels,
+            datasets: [{
+                data: data.monthlyReturn.data,
+                borderColor: '#1e3a8a',
+                borderWidth: 2,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: '#1e3a8a',
+                pointRadius: 4,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            layout: { padding: {top: 40} },
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    backgroundColor: '#fff',
+                    borderColor: '#999',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    color: '#ef4444',
+                    font: { size: 14, weight: 'bold' },
+                    formatter: function(value, context) {
+                        return value ? '+' + value : '';
+                    },
+                    anchor: 'end',
+                    align: 'top',
+                    offset: 8
+                }
+            },
+            scales: {
+                y: { min: 0.6, max: 0.9, ticks: {stepSize: 0.05}, grid: {color: '#cfd9e5'} },
+                x: { grid: {color: '#cfd9e5'} }
+            }
+        }
+    });
+
+    // Chart 3: Total Orders (Doughnut)
+    new Chart(document.getElementById('chart3'), {
+        type: 'doughnut',
+        data: {
+            labels: data.orders.labels,
+            datasets: [{
+                data: data.orders.data,
+                backgroundColor: ['#f9926c','#ffcc5c','#8690fa','#6cd4e4','#6e97f4','#565396','#8e8e8e'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            cutout: '55%',
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    color: (ctx) => ctx.dataset.backgroundColor[ctx.dataIndex],
+                    anchor: 'end',
+                    align: 'end',
+                    formatter: (v, ctx) => {
+                        return ctx.chart.data.labels[ctx.dataIndex] + '\n' + v + '%';
+                    },
+                    font: {weight: 'bold', size:12},
+                    textAlign: 'center'
+                }
+            },
+            layout: { padding: 40 }
+        }
+    });
+
+    // Chart 4: Total Sales Ranking (Vertical Bar)
+    new Chart(document.getElementById('chart4'), {
+        type: 'bar',
+        data: {
+            labels: data.ranking.labels,
+            datasets: [{
+                data: data.ranking.data,
+                backgroundColor: '#7c7bed',
+                barPercentage: 0.7
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, datalabels: { display: false } },
+            scales: {
+                x: { 
+                    grid: {display:false}, 
+                    ticks: { maxRotation: 45, minRotation: 45, font:{size:11} } 
+                },
+                y: { min: 0, max: 600000, ticks: {stepSize: 100000}, grid: {color: '#cfd9e5'} }
+            }
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", initDashboard);
+</script>
+</body>
+</html>

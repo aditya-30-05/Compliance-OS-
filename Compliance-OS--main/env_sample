@@ -1,0 +1,55 @@
+# ══════════════════════════════════════════════
+# ComplianceOS Environment Configuration
+# ══════════════════════════════════════════════
+
+# ── AI Engine ──
+GROQ_API_KEY=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
+GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MAX_RETRIES=3
+
+# ── Application ──
+DEBUG=true
+APP_NAME=ComplianceOS
+SECRET_KEY=complianceos_dev_secret_key_change_in_production_2024
+ENVIRONMENT=production
+
+# ── Database (SQLite for dev, Postgres for Prod) ──
+DATABASE_URL=sqlite+aiosqlite:///./complianceos.db
+# DATABASE_URL=postgresql+asyncpg://cos_user:cos_password@db:5432/complianceos
+
+# ── SaaS Infrastructure (Docker Compose) ──
+DB_NAME=complianceos
+DB_USER=cos_user
+DB_PASSWORD=cos_password
+REDIS_URL=redis://redis:6379/0
+
+# ── JWT Auth ──
+JWT_SECRET=complianceos_jwt_dev_secret_change_in_prod_2024
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# ── File Uploads ──
+UPLOAD_DIR=./uploads
+MAX_UPLOAD_SIZE_MB=50
+ALLOWED_EXTENSIONS=.pdf,.docx,.doc,.txt
+
+# ── Vector Database ──
+CHROMA_PERSIST_DIR=./chroma_data
+CHROMA_COLLECTION_PREFIX=cos
+
+# ── Email Service (Resend/SendGrid) ──
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=587
+SMTP_USER=resend
+SMTP_PASSWORD=your_resend_api_key_here
+MAIL_FROM=no-reply@complianceos.ai
+
+# ── Stripe Billing (Test Keys) ──
+STRIPE_SECRET_KEY=sk_test_51...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_ID_STARTUP=price_...
+STRIPE_PRICE_ID_GROWTH=price_...
+
+# ── CORS ──
+CORS_ORIGINS=["http://localhost:8000","http://127.0.0.1:8000","https://app.complianceos.ai"]

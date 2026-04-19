@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Real-Time Compliance Operations Ticker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&display=swap" rel="stylesheet"/>
+<style>
+/* Safe Code Augmentation - Standalone Realtime CSS */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+    background-color: #050a12; 
+    color: #e2e8f0; 
+    font-family: 'JetBrains Mono', monospace; 
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.header {
+    background: rgba(15,23,42,0.9);
+    border-bottom: 1px solid #1e293b;
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.live-marker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ef4444;
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+}
+.pulse-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes ping {
+    75%, 100% { transform: scale(2); opacity: 0; }
+}
+.stats { display: flex; gap: 24px; font-size: 0.8rem; color: #64748b; }
+.stats span { color: #38bdf8; font-weight: 600; }
+
+.feed-container {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+    position: relative;
+    background: linear-gradient(180deg, #050a12 0%, #020617 100%);
+}
+
+.circular-card {
+    background: rgba(30, 41, 59, 0.4);
+    border-left: 4px solid #3b82f6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    opacity: 0; /* set for GSAP fade-in */
+    transform: translateY(-20px);
+}
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+.badge-regulator {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+.card-title {
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin-bottom: 12px;
+    color: #f8fafc;
+}
+.card-details {
+    display: flex;
+    gap: 20px;
+}
+.scan-status {
+    font-size: 0.8rem;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.status-loading { color: #f59e0b; }
+.status-done { color: #10b981; }
+
+.risk-tag {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+.risk-HIGH { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.risk-MEDIUM { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.risk-LOW { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+
+.overlay-scanline {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.1) 51%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.4;
+}
+</style>
+</head>
+<body>
+
+<div class="overlay-scanline"></div>
+
+<header class="header">
+    <div class="live-marker">
+        <div class="pulse-dot"></div>
+        LIVE CIRCULAR RADAR
+    </div>
+    <div class="stats">
+        <div>Endpoints Monitored: <span>84</span></div>
+        <div>Total Detections Today: <span id="detection-count">12</span></div>
+    </div>
+    <a href="/" style="padding:8px 16px; background:#1e293b; color:#fff; text-decoration:none; border-radius:8px; border:1px solid #334155; font-size:0.8rem">← Back to System</a>
+</header>
+
+<div class="feed-container" id="feedArea">
+    <!-- Live updates will be injected here -->
+</div>
+
+<script>
+// Mock data representing newly published regulatory bodies and documents
+const mockDatabase = [
+    { reg: "RBI", title: "Master Direction on Digital Payment Security Controls", risk: "HIGH", color: "#3b82f6" },
+    { reg: "SEBI", title: "Amendments to Insider Trading Restrictions (2026)", risk: "HIGH", color: "#8b5cf6" },
+    { reg: "IRDAI", title: "Guidelines on AI Underwriting Models in Insurance", risk: "MEDIUM", color: "#06b6d4" },
+    { reg: "MCA", title: "CSR Reporting Format Revisions", risk: "LOW", color: "#10b981" },
+    { reg: "RBI", title: "Review of NBFC Co-Lending Framework", risk: "MEDIUM", color: "#f59e0b" },
+    { reg: "UIDAI", title: "Aadhaar e-KYC Vault Security Expansion", risk: "HIGH", color: "#ef4444" }
+];
+
+let detectionCount = 12;
+
+function getRandomId() {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
+function createCircularCard() {
+    // Select random mock circular
+    const data = mockDatabase[Math.floor(Math.random() * mockDatabase.length)];
+    const timeFrame = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const uuid = getRandomId();
+    
+    // Create element
+    const card = document.createElement("div");
+    card.className = "circular-card";
+    card.style.borderLeftColor = data.color;
+    card.innerHTML = `
+        <div class="card-header">
+            <div>[TIMESTAMP: ${timeFrame}] · ID_REF: ${uuid}</div>
+            <div class="badge-regulator">${data.reg}</div>
+        </div>
+        <div class="card-title">Interception: ${data.title}</div>
+        <div class="card-details">
+            <div class="scan-status" id="status-${uuid}">
+                <span class="status-loading">[System] Extracting parameters...</span>
+            </div>
+        </div>
+    `;
+
+    // Inject to the TOP of the feed
+    const container = document.getElementById("feedArea");
+    container.insertBefore(card, container.firstChild);
+    
+    // GSAP Intro Animation
+    gsap.to(card, {
+        opacity: 1, 
+        y: 0, 
+        duration: 0.6, 
+        ease: "power3.out"
+    });
+
+    // Update Counter
+    detectionCount++;
+    document.getElementById('detection-count').innerText = detectionCount;
+
+    // Simulate Agent processing delay
+    setTimeout(() => {
+        const detailsContainer = card.querySelector('.card-details');
+        const statusEl = document.getElementById(`status-${uuid}`);
+        
+        // Update parsing text
+        statusEl.innerHTML = `<span class="status-done">[Agent] Analysis Complete</span>`;
+        
+        // Inject Tag
+        const tag = document.createElement('div');
+        tag.className = `risk-tag risk-${data.risk}`;
+        tag.innerText = `IMPACT: ${data.risk}`;
+        
+        // Add a "View Action Plan" fake button to match the enterprise feel
+        const actionBtn = document.createElement('div');
+        actionBtn.style = "font-size:0.75rem; text-decoration:underline; color:#38bdf8; cursor:pointer;";
+        actionBtn.innerText = "Execute Routeing Protocol »";
+
+        detailsContainer.appendChild(tag);
+        detailsContainer.appendChild(actionBtn);
+
+        // Flash green quickly to simulate validation
+        gsap.fromTo(card, 
+            { backgroundColor: "rgba(16, 185, 129, 0.3)" }, 
+            { backgroundColor: "rgba(30, 41, 59, 0.4)", duration: 1.5 }
+        );
+
+    }, 2500 + Math.random() * 2000); // Process for 2.5 - 4.5 seconds
+}
+
+// Initialization Loop
+document.addEventListener("DOMContentLoaded", () => {
+    // Generate an initial backlog of a few circulars
+    createCircularCard();
+    setTimeout(createCircularCard, 800);
+    setTimeout(createCircularCard, 1600);
+
+    // Continuous Real-Time Generator Loop (every 5-10 seconds)
+    function loopGenerator() {
+        setTimeout(() => {
+            createCircularCard();
+            loopGenerator();
+        }, 5000 + Math.random() * 7000);
+    }
+    
+    loopGenerator();
+});
+</script>
+</body>
+</html>

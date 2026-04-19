@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Profile Settings | ComplianceOS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#030712;--surface:#0f172a;--border:#334155;
+  --accent:#3b82f6;--accent2:#8b5cf6;--text:#f8fafc;--muted:#94a3b8;
+}
+body {
+  background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif;
+  margin: 0; padding: 60px 20px;
+}
+.bg-grid {
+  position: fixed; inset: 0; background-image: linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size: 80px 80px; opacity: 0.1; pointer-events: none;
+}
+.container { max-width: 800px; margin: 0 auto; position: relative; z-index: 10; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 40px; margin-bottom: 30px; }
+.header { margin-bottom: 40px; }
+h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -1.5px; margin: 0; }
+.badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; background: rgba(59,130,246,0.1); color: var(--accent); margin-top: 8px; }
+
+.field-group { margin-bottom: 24px; }
+label { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; font-weight: 700; letter-spacing: 0.5px; }
+.value-box { 
+  background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; 
+  padding: 14px; color: var(--text); font-weight: 500;
+}
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.danger-zone { border-color: rgba(239,68,68,0.2); background: rgba(239,68,68,0.02); }
+.btn-logout { background: #ef4444; color: #fff; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="container">
+  <div class="header">
+    <h1>Account Settings</h1>
+    <div id="userBadge" class="badge">PLATFORM ADMIN</div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Personal Information</h3>
+    <div class="grid">
+      <div class="field-group">
+        <label>Full Name</label>
+        <div id="uName" class="value-box">Loading...</div>
+      </div>
+      <div class="field-group">
+        <label>Email Address</label>
+        <div id="uEmail" class="value-box">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">Organization</h3>
+    <div class="grid">
+      <div class="field-group">
+        <label>Entity Name</label>
+        <div id="tName" class="value-box">Loading...</div>
+      </div>
+      <div class="field-group">
+        <label>Industry Vertical</label>
+        <div id="tIndustry" class="value-box">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card danger-zone">
+    <h3 style="margin-top:0; color:#ef4444">Session Control</h3>
+    <p style="color:var(--muted); font-size: 0.9rem">Terminating your session will require re-authentication.</p>
+    <button class="btn-logout" onclick="logout()">Sign Out of All Devices</button>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('cos_token');
+if (!token) window.location.href = '/login.html';
+
+async function loadProfile() {
+  const res = await fetch('/auth/me', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  if (res.ok) {
+    const user = await res.json();
+    document.getElementById('uName').innerText = user.full_name;
+    document.getElementById('uEmail').innerText = user.email;
+    document.getElementById('userBadge').innerText = user.role.toUpperCase();
+    
+    // Fetch tenant info
+    // (In a real app, I'd have a /tenants/me endpoint, but I'll use the user.tenant_id for now)
+    // For demo, I'll update text via user object if stored
+    const storedUser = JSON.parse(localStorage.getItem('cos_user') || '{}');
+    if (storedUser.company) document.getElementById('tName').innerText = storedUser.company;
+  }
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = '/login.html';
+}
+
+loadProfile();
+gsap.from(".card", { opacity: 0, x: -20, stagger: 0.15, duration: 0.8, ease: "power4.out" });
+</script>
+</body>
+</html>
