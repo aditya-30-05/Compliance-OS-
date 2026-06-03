@@ -16,6 +16,7 @@ class UserRole(str, enum.Enum):
 class User(Base, TimestampMixin):
     __tablename__ = "users"
 
+    
     id = Column(String(36), primary_key=True, default=generate_uuid)
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
