@@ -10,7 +10,6 @@ class Base(DeclarativeBase):
     """Base class for all ComplianceOS models."""
     pass
 
-
 class TimestampMixin:
     """Adds created_at / updated_at to any model."""
     created_at = Column(
