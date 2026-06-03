@@ -23,7 +23,7 @@ class Report(Base, TimestampMixin):
     tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=True)
 
     # Relationships
-    user = relationship("User", back_populates="reports")
+    user = relationship("User", back_populates="reports"),
     tenant = relationship("Tenant", back_populates="reports")
 
     def __repr__(self):
