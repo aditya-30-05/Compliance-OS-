@@ -1,6 +1,5 @@
 """User model with role-based access control."""
 
-
 import enum
 from sqlalchemy import Column, String, Boolean, Integer, ForeignKey, Enum
 from sqlalchemy.orm import relationship
@@ -12,7 +11,6 @@ class UserRole(str, enum.Enum):
     ADMIN = "admin"
     ANALYST = "analyst"
     CLIENT = "client"
-
 
 class User(Base, TimestampMixin):
     __tablename__ = "users"
