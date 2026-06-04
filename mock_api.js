@@ -2,6 +2,7 @@
 class AnalyticsMockAPI {
     constructor() {
         this.baseData = {
+            
             annualSales: { 
                 labels: ['2008', '2009'], 
                 data: [10835700, 5613000] 
